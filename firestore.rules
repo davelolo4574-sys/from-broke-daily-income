@@ -1,0 +1,101 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "davelolo4574@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidLead(data) {
+      return data.email is string && isValidEmail(data.email) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() < 20)) &&
+             data.source is string &&
+             data.createdAt is string;
+    }
+
+    function isValidOrder(data) {
+      return data.customerEmail is string && isValidEmail(data.customerEmail) &&
+             data.customerName is string && data.customerName.size() > 0 &&
+             data.productId is string &&
+             data.amount is number && data.amount >= 0 &&
+             data.status in ['verifying', 'completed', 'failed'] &&
+             data.paymentMethod is string &&
+             data.referenceNumber is string && data.referenceNumber.size() >= 8 &&
+             data.proofOfPayment is string &&
+             data.createdAt is string;
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Products: Publicly readable, admin writable
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Blog Posts: Publicly readable, admin writable
+    match /blogPosts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Leads: Publicly writable (for capture forms), admin readable
+    match /leads/{leadId} {
+      allow create: if isValidLead(request.resource.data);
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Orders: Publicly writable (for checkout).
+    // Allow reading individual documents by ID for guest eBook access.
+    match /orders/{orderId} {
+      allow create: if true; // Allow creation for checkout
+      allow get: if true;    // Allow anyone to get their own order by ID
+      allow list: if isAdmin(); // Only admins can list all orders
+      allow update, delete: if isAdmin();
+    }
+
+    // Site Config: Publicly readable, admin writable
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.role == 'user';
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

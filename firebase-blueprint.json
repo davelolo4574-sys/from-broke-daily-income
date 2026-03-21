@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Digital product or financial program",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "ctaText": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "draft"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "slug": { "type": "string" },
+        "seoTitle": { "type": "string" },
+        "seoDescription": { "type": "string" },
+        "seoKeywords": { "type": "string" }
+      },
+      "required": ["title", "description", "price", "status", "slug"]
+    },
+    "BlogPost": {
+      "title": "Blog Post",
+      "description": "Educational content for financial growth",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "content": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "author": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string", "enum": ["published", "draft"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "seoTitle": { "type": "string" },
+        "seoDescription": { "type": "string" },
+        "seoKeywords": { "type": "string" }
+      },
+      "required": ["title", "slug", "content", "status"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "Potential customer from capture forms",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "source": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer purchase record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerEmail": { "type": "string", "format": "email" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "productId": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["verifying", "completed", "failed"] },
+        "paymentMethod": { "type": "string" },
+        "referenceNumber": { "type": "string" },
+        "proofOfPayment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["customerEmail", "productId", "amount", "status", "createdAt", "referenceNumber", "proofOfPayment"]
+    },
+    "SiteConfig": {
+      "title": "Site Configuration",
+      "description": "Global branding and design settings",
+      "type": "object",
+      "properties": {
+        "brandName": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "heroHeadline": { "type": "string" },
+        "heroSubheadline": { "type": "string" },
+        "contactEmail": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "products": {
+      "schema": "Product",
+      "description": "Digital products catalog"
+    },
+    "blogPosts": {
+      "schema": "BlogPost",
+      "description": "Educational articles"
+    },
+    "leads": {
+      "schema": "Lead",
+      "description": "Captured leads"
+    },
+    "orders": {
+      "schema": "Order",
+      "description": "Sales records"
+    },
+    "config": {
+      "schema": "SiteConfig",
+      "description": "Global site settings"
+    }
+  }
+}
