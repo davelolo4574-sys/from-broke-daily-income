@@ -47,7 +47,7 @@ const Checkout = () => {
     id: productId,
     title: productId === '1' ? 'From Broke Into Daily Income' : 'Freelance Mastery PH',
     price: productId === '1' ? 297 : 1999,
-    downloadUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' // Placeholder PDF
+    downloadUrl: 'https://drive.google.com/uc?export=download&id=19SezbXCFNJrK3BDb4JxxoXFi9NzrLj8B' // Placeholder PDF
   };
 
   const { register, handleSubmit, formState: { errors }, trigger } = useForm<CheckoutFormValues>();
