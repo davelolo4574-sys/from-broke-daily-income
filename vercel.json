@@ -1,0 +1,25 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
+}
+```
+
+**Press CTRL + S to save**
+
+---
+
+**Now push this to GitHub:**
+
+Run these commands one by one:
+```
+git add .
+```
+```
+git commit -m "Fix routing"
+```
+```
+git push
