@@ -1,25 +1,15 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/"
+      "src": "server.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "server.ts"
     }
   ]
 }
-```
-
-**Press CTRL + S to save**
-
----
-
-**Now push this to GitHub:**
-
-Run these commands one by one:
-```
-git add .
-```
-```
-git commit -m "Fix routing"
-```
-```
-git push
