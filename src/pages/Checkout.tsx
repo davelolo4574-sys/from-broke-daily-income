@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldCheck, 
@@ -9,14 +9,10 @@ import {
   Smartphone,
   Upload,
   Download,
-  BookOpen,
-  ExternalLink,
   Copy,
-  Check,
-  X
+  Check
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createDocument } from '../services/firestore';
 
@@ -31,23 +27,18 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 const Checkout = () => {
   const { productId } = useParams();
-  const navigate = useNavigate();
   const [step, setStep] = React.useState(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isVerified, setIsVerified] = React.useState(true);
+  const [isSuccess, setIsSuccess] = React.useState(false);
   const [isVerified, setIsVerified] = React.useState(false);
-  const [orderId, setOrderId] = React.useState<string | null>(null);
-  const [downloadTriggered, setDownloadTriggered] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [proofImage, setProofImage] = React.useState<string | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
 
-  // Mock product data
   const product = {
     id: productId,
-    title: productId === '1' ? 'From Broke Into Daily Income' : 'Freelance Mastery PH',
-    price: productId === '1' ? 297 : 1999,
-    downloadUrl: 'https://drive.google.com/file/d/19SezbXCFNJrK3BDb4JxxoXFi9NzrLj8B/view?usp=sharing' // Placeholder PDF
+    title: 'From Broke Into Daily Income',
+    price: 297,
+    downloadUrl: 'https://drive.google.com/file/d/19SezbXCFNJrK3BDb4JxxoXFi9NzrLj8B/view?usp=sharing'
   };
 
   const { register, handleSubmit, formState: { errors }, trigger } = useForm<CheckoutFormValues>();
@@ -70,15 +61,13 @@ const Checkout = () => {
 
   const onSubmit = async (data: CheckoutFormValues) => {
     if (!proofImage) {
-      setError('Pakisend ang screenshot ng iyong payment proof.');
+      alert('Pakisend ang screenshot ng iyong payment proof.');
       return;
     }
 
     setIsSubmitting(true);
-    setError(null);
     try {
-      // Submit to Firestore
-      const newOrderId = await createDocument('orders', {
+      await createDocument('orders', {
         customerEmail: data.email,
         customerName: data.name,
         customerPhone: data.phone,
@@ -91,14 +80,9 @@ const Checkout = () => {
         createdAt: new Date().toISOString()
       });
 
-      setOrderId(newOrderId);
-
-      // Submit to Formspree
       await fetch('https://formspree.io/f/xojkbzbv', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           formType: 'Checkout',
           ...data,
@@ -108,17 +92,15 @@ const Checkout = () => {
           proofOfPayment: 'Image uploaded to Firestore'
         })
       });
-      
-      // Simulate verification process
+
       setTimeout(() => {
         setIsSuccess(true);
         setIsSubmitting(false);
-        // Auto-verify after 1.5 seconds for demo purposes
-        setTimeout(() => setIsVerified(true), 1500);
-      }, 1500);
-    } catch (err) {
-      console.error('Checkout error:', err);
-      setError('May mali sa pag-process ng iyong order. Pakisubukang muli.');
+        setTimeout(() => setIsVerified(true), 3000);
+      }, 2000);
+
+    } catch (error) {
+      console.error('Checkout error:', error);
       setIsSubmitting(false);
     }
   };
@@ -128,20 +110,6 @@ const Checkout = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  React.useEffect(() => {
-    if (isVerified && product.downloadUrl && !downloadTriggered) {
-      setDownloadTriggered(true);
-      // Trigger download
-      const link = document.createElement('a');
-      link.href = product.downloadUrl;
-      link.setAttribute('download', `${product.title}.pdf`);
-      link.setAttribute('target', '_blank');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  }, [isVerified, product.downloadUrl, product.title, downloadTriggered]);
 
   if (isSuccess) {
     return (
@@ -165,15 +133,9 @@ const Checkout = () => {
                 </div>
                 <h2 className="text-3xl font-black text-zinc-900">Verifying Payment...</h2>
                 <p className="text-zinc-500 leading-relaxed">
-                  Salamat! Natanggap na namin ang iyong payment proof. Ang aming team ay kasalukuyang vine-verify ang iyong transaction. 
+                  Salamat! Natanggap na namin ang iyong payment proof. 
                   <br /><span className="text-sm font-bold text-emerald-600 mt-2 block">Mangyaring huwag i-close ang page na ito.</span>
                 </p>
-                {orderId && (
-                  <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 text-left">
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Order ID (Save this)</p>
-                    <p className="text-xs font-mono text-zinc-600 break-all">{orderId}</p>
-                  </div>
-                )}
                 <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: "0%" }}
@@ -194,24 +156,25 @@ const Checkout = () => {
                   <CheckCircle2 size={56} />
                 </div>
                 <div>
-                  <h2 className="text-4xl font-black text-zinc-900 mb-2">Payment Verified!</h2>
-                  <p className="text-zinc-500">Handa na ang iyong copy ng <strong>{product.title}</strong>.</p>
-                  {downloadTriggered && (
-                    <p className="text-emerald-600 text-sm font-bold mt-2 animate-bounce">
-                      Ang iyong PDF download ay nagsisimula na...
-                    </p>
-                  )}
+                  <h2 className="text-4xl font-black text-zinc-900 mb-2">Order Received!</h2>
+                  <p className="text-zinc-500">Salamat sa iyong purchase ng <strong>{product.title}</strong>.</p>
+                  <p className="text-zinc-400 text-sm mt-2">I-download na ang iyong eBook sa ibaba:</p>
                 </div>
                 
                 <div className="bg-emerald-50 p-8 rounded-3xl border border-emerald-100">
-                  <p className="text-emerald-900 font-bold mb-6">Maaari mo nang basahin o i-download ang iyong eBook sa ibaba:</p>
-                  <Link 
-                    to={`/my-ebook/${orderId}`}
+                  <p className="text-emerald-900 font-bold mb-6">Maaari mo nang i-download ang iyong eBook:</p>
+                  <a 
+                    href={product.downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center justify-center space-x-3 w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200"
                   >
-                    <BookOpen size={24} />
-                    <span>Read eBook Online</span>
-                  </Link>
+                    <Download size={24} />
+                    <span>I-download ang eBook (PDF)</span>
+                  </a>
+                  <p className="text-xs text-zinc-400 mt-4">
+                    Kung hindi mag-download, i-click ang link at piliin ang "Download" sa Google Drive.
+                  </p>
                 </div>
 
                 <div className="pt-4">
@@ -240,7 +203,6 @@ const Checkout = () => {
         </Link>
 
         <div className="grid lg:grid-cols-5 gap-12">
-          {/* Checkout Form */}
           <div className="lg:col-span-3">
             <div className="bg-white p-8 lg:p-12 rounded-[3rem] shadow-xl border border-black/5">
               <div className="flex items-center justify-between mb-12">
@@ -339,12 +301,6 @@ const Checkout = () => {
                     </div>
 
                     <div className="space-y-6">
-                      {error && (
-                        <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-sm font-bold flex items-center space-x-2">
-                          <X size={16} />
-                          <span>{error}</span>
-                        </div>
-                      )}
                       <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 px-1">GCash Reference Number</label>
                         <input 
@@ -413,7 +369,6 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-2">
             <div className="bg-zinc-900 text-white p-8 lg:p-12 rounded-[3rem] shadow-xl sticky top-24">
               <h3 className="text-2xl font-black mb-8">Order Summary</h3>
@@ -449,11 +404,11 @@ const Checkout = () => {
               <div className="bg-zinc-800/50 p-6 rounded-2xl space-y-4">
                 <div className="flex items-start space-x-3 text-xs text-zinc-400">
                   <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
-                  <span>Instant download pagkatapos ma-verify ang iyong payment.</span>
+                  <span>I-download agad ang eBook pagkatapos mag-submit.</span>
                 </div>
                 <div className="flex items-start space-x-3 text-xs text-zinc-400">
                   <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
-                  <span>Siguraduhin na tama ang Reference Number para sa mabilis na verification.</span>
+                  <span>Siguraduhin na tama ang Reference Number para sa records.</span>
                 </div>
               </div>
             </div>
