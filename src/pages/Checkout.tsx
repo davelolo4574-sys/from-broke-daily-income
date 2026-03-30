@@ -34,7 +34,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [step, setStep] = React.useState(1);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isSuccess, setIsSuccess] = React.useState(false);
+  const [isVerified, setIsVerified] = React.useState(true);
   const [isVerified, setIsVerified] = React.useState(false);
   const [orderId, setOrderId] = React.useState<string | null>(null);
   const [downloadTriggered, setDownloadTriggered] = React.useState(false);
